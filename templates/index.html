@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pictionary Game</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+    <style>
+        /* Add this style block to your HTML to style the layout */
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        #container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        #chatContainer {
+            display: flex;
+            flex-direction: column;
+            margin-left: 20px;
+        }
+
+        #drawingCanvas {
+            border: 1px solid #ccc;
+        }
+
+        #chatBox {
+            width: 300px;
+            height: 400px;
+            border: 1px solid #ccc;
+            overflow-y: scroll;
+            margin-bottom: 10px;
+        }
+
+        #chatInput {
+            width: 230px;
+            margin-bottom: 10px;
+        }
+
+        #sendButton {
+            width: 60px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Pictionary Game</h1>
+    <div id="container">
+        <canvas id="drawingCanvas" width="800" height="600"></canvas>
+
+        <div id="chatContainer">
+            <div id="chatBox"></div>
+            <input type="text" id="chatInput" placeholder="Type your message here">
+            <button id="sendButton">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        const chatBox = document.getElementById('chatBox');
+        const chatInput = document.getElementById('chatInput');
+        const sendButton = document.getElementById('sendButton');
+        let drawing = false;
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mousemove', draw);
+
+        function startDrawing(e) {
+            drawing = true;
+            ctx.beginPath();
+            ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+        }
+
+        function stopDrawing() {
+            drawing = false;
+        }
+
+        function draw(e) {
+            if (!drawing) return;
+
+            const x = e.clientX - canvas.offsetLeft;
+            const y = e.clientY - canvas.offsetTop;
+
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Emit draw event with the coordinates
+            socket.emit('draw', { x, y });
+        }
+
+        // Listen for draw events from the server
+        socket.on('draw', (data) => {
+            ctx.lineTo(data.x, data.y);
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        });
+
+        // Send message on button click
+        sendButton.addEventListener('click', sendMessage);
+
+        // Send message on enter key press
+        chatInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        function sendMessage() {
+            const message = chatInput.value;
+            if (message.trim() !== '') {
+                socket.emit('chat', message);
+                chatInput.value = ''; // Clear the input field
+            }
+        }
+
+        // Listen for chat messages from the server
+        socket.on('chat', (message) => {
+            const messageElement = document.createElement('div');
+            messageElement.textContent = message;
+            chatBox.appendChild(messageElement);
+            chatBox.scrollTop = chatBox.scrollHeight; // Scroll to the bottom
+        });
+    </script>
+</body>
+</html>
