@@ -48,6 +48,15 @@
         #sendButton {
             width: 60px;
         }
+
+        #userList {
+            border: 1px solid #ccc;
+            padding: 10px;
+            width: 300px;
+            max-height: 150px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -59,6 +68,9 @@
             <div id="chatBox"></div>
             <input type="text" id="chatInput" placeholder="Type your message here">
             <button id="sendButton">Send</button>
+            <div id="userList">
+                <h3>List of Users:</h3>
+                <ul id="users"></ul>
         </div>
     </div>
 
@@ -69,6 +81,7 @@
         const chatBox = document.getElementById('chatBox');
         const chatInput = document.getElementById('chatInput');
         const sendButton = document.getElementById('sendButton');
+        const usersList = document.getElementById('users');
         let drawing = false;
 
         // Capture the username from the server-side
@@ -137,6 +150,24 @@
             messageElement.textContent = `${username}: ${message}`;
             chatBox.appendChild(messageElement);
             chatBox.scrollTop = chatBox.scrollHeight; // Scroll to the bottom
+        });
+
+         // Listen for user list updates from the server
+        socket.on('user_list', (users) => {
+            usersList.innerHTML = ''; // Clear the list
+            users.forEach((user) => {
+                const userElement = document.createElement('li');
+                userElement.textContent = user;
+                usersList.appendChild(userElement);
+            });
+        });
+
+        // Notify the server of a new user
+        socket.emit('new_user', username);
+
+        // Notify the server of a user disconnect
+        window.addEventListener('beforeunload', () => {
+            socket.emit('disconnect_user', username);
         });
     </script>
 </body>

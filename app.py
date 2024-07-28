@@ -1,10 +1,16 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_socketio import SocketIO, emit
+#TODO
+# add all usernames in the front end
+# create a start game button which starts a timer
+# alllow access of canva to one user at a time
 
+#allow drawing on canva for
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 ROOM_PASSWORD = 'lalaland'
 socketio = SocketIO(app)
+connected_users = []
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -32,6 +38,23 @@ def home():
 def index():
     username = session.get('username', 'Guest')  # Retrieve the username from the session
     return render_template('index.html', username=username)
+
+@socketio.on('new_user')
+def handle_new_user(username):
+    if username not in connected_users:
+        connected_users.append(username)
+    emit('user_list', connected_users, broadcast=True)
+
+@socketio.on('disconnect_user')
+def handle_disconnect_user(username):
+    if username in connected_users:
+        connected_users.remove(username)
+    emit('user_list', connected_users, broadcast=True)
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    username = session.get('username', 'Guest')
+    handle_disconnect_user(username)
 
 @socketio.on('draw')
 def handle_draw(data):
