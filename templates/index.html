@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
     <style>
-        /* Add this style block to your HTML to style the layout */
         body {
             display: flex;
             flex-direction: column;
@@ -57,10 +56,15 @@
             overflow-y: auto;
             margin-top: 10px;
         }
+
+        #startButton {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
     <h1>Pictionary Game</h1>
+    <button id="startButton">Start Game</button>
     <div id="container">
         <canvas id="drawingCanvas" width="800" height="600"></canvas>
 
@@ -71,6 +75,7 @@
             <div id="userList">
                 <h3>List of Users:</h3>
                 <ul id="users"></ul>
+            </div>
         </div>
     </div>
 
@@ -82,14 +87,22 @@
         const chatInput = document.getElementById('chatInput');
         const sendButton = document.getElementById('sendButton');
         const usersList = document.getElementById('users');
+        const startButton = document.getElementById('startButton');
         let drawing = false;
+        let canDraw = false;
 
         // Capture the username from the server-side
         const username = "{{ username }}";  // Get username from Flask server
 
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('mouseup', stopDrawing);
-        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mousedown', (e) => {
+            if (canDraw) startDrawing(e);
+        });
+        canvas.addEventListener('mouseup', (e) => {
+            if (canDraw) stopDrawing();
+        });
+        canvas.addEventListener('mousemove', (e) => {
+            if (canDraw) draw(e);
+        });
 
         function startDrawing(e) {
             drawing = true;
@@ -152,7 +165,7 @@
             chatBox.scrollTop = chatBox.scrollHeight; // Scroll to the bottom
         });
 
-         // Listen for user list updates from the server
+        // Listen for user list updates from the server
         socket.on('user_list', (users) => {
             usersList.innerHTML = ''; // Clear the list
             users.forEach((user) => {
@@ -169,6 +182,20 @@
         window.addEventListener('beforeunload', () => {
             socket.emit('disconnect_user', username);
         });
+
+        // Start the game when the "Start Game" button is clicked
+        startButton.addEventListener('click', () => {
+            console.log('Start game button clicked');
+            socket.emit('start_game');
+        });
+
+        // Listen for turn updates from the server
+        socket.on('turn', (data) => {
+            const currentDrawer = data;
+            console.log('inside turn method');
+            canDraw = (currentDrawer === username); // Only the current user can draw
+        });
+
     </script>
 </body>
 </html>
