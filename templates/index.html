@@ -71,6 +71,9 @@
         const sendButton = document.getElementById('sendButton');
         let drawing = false;
 
+        // Capture the username from the server-side
+        const username = "{{ username }}";  // Get username from Flask server
+
         canvas.addEventListener('mousedown', startDrawing);
         canvas.addEventListener('mouseup', stopDrawing);
         canvas.addEventListener('mousemove', draw);
@@ -121,15 +124,17 @@
         function sendMessage() {
             const message = chatInput.value;
             if (message.trim() !== '') {
-                socket.emit('chat', message);
+                // Send the message along with the username
+                socket.emit('chat', { username, message });
                 chatInput.value = ''; // Clear the input field
             }
         }
 
         // Listen for chat messages from the server
-        socket.on('chat', (message) => {
+        socket.on('chat', (data) => {
+            const { username, message } = data;
             const messageElement = document.createElement('div');
-            messageElement.textContent = message;
+            messageElement.textContent = `${username}: ${message}`;
             chatBox.appendChild(messageElement);
             chatBox.scrollTop = chatBox.scrollHeight; // Scroll to the bottom
         });
