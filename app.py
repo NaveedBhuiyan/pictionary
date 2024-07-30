@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_socketio import SocketIO, emit
-import threading
+import time
 
 #TODO
 # display username at frontend
@@ -78,33 +78,36 @@ def handle_start_game():
         start_game_turns()
 
 
+"""
 def start_game_turns():
     global current_drawer_index, game_started
-    current_drawer_index %= len(connected_users)
-    current_drawer = connected_users[current_drawer_index]
-    print(f"Current drawer: {current_drawer}")  # Debug line
-    socketio.emit('turn', current_drawer, to='/')
-    emit('turn', current_drawer, broadcast=True)
-    current_drawer_index += 1
-    socketio.sleep(10)
-
-"""
-    def next_turn():
-        global current_drawer_index, game_started
-        while game_started:
-            if connected_users:
-                current_drawer_index %= len(connected_users)
-                current_drawer = connected_users[current_drawer_index]
-                print(f"Current drawer: {current_drawer}")  # Debug line
-                socketio.emit('turn', current_drawer, to='/')
-                #emit('turn', current_drawer, broadcast=True)
-                current_drawer_index += 1
-            socketio.sleep(10)
-    #thread = threading.Thread(target=next_turn)
-    #thread.start()
-    socketio.start_background_task(next_turn)
+    for i in range(10):
+        current_drawer_index %= len(connected_users)
+        current_drawer = connected_users[current_drawer_index]
+        print(f"Current drawer: {current_drawer}")  # Debug line
+        #socketio.emit('turn', {'currentDrawer': current_drawer, 'timer': i}, to='/')
+        emit('turn', current_drawer, broadcast=True)
+        current_drawer_index += 1
+        socketio.sleep(1)
 """
 
+def start_game_turns():
+    global current_drawer_index, game_started
+    while game_started:
+        current_drawer_index %= len(connected_users)
+        current_drawer = connected_users[current_drawer_index]
+        print(f"Current drawer: {current_drawer}")  # Debug line
+        # Additional data you want to send
+        # Countdown loop
+        for countdown in range(10):
+            emit('turn', {'currentDrawer': current_drawer, 'countdown': countdown}, broadcast=True)
+            #time.sleep(1)  # Wait for 1 second
+            socketio.sleep(1)
+        # Emit the turn event with multiple pieces of data
+        #emit('turn', {'currentDrawer': current_drawer, 'countdown': countdown_time}, broadcast=True)
+        current_drawer_index += 1
+
+            #socketio.sleep(10)
 
 @socketio.on('draw')
 def handle_draw(data):

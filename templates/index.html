@@ -64,6 +64,7 @@
 </head>
 <body>
     <h1>Pictionary Game</h1>
+     <div id="currentDrawer">Current Drawer: </div>
     <button id="startButton">Start Game</button>
     <div id="container">
         <canvas id="drawingCanvas" width="800" height="600"></canvas>
@@ -191,9 +192,13 @@
 
         // Listen for turn updates from the server
         socket.on('turn', (data) => {
-            const currentDrawer = data;
+            const currentDrawer = data.currentDrawer;
+            const countdown = data.countdown;
             console.log('inside turn method');
             canDraw = (currentDrawer === username); // Only the current user can draw
+                // Update the current drawer display
+            const currentDrawerElement = document.getElementById('currentDrawer');
+            currentDrawerElement.textContent = `Current Drawer: ${currentDrawer} : ${countdown}`;
         });
 
     </script>
