@@ -1,12 +1,14 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_socketio import SocketIO, emit
 import time
+import random
+
+# Example list of words
+WORDS = ["apple", "banana", "car", "dog", "elephant"]
 
 #TODO
-# display username at frontend
 # write algorithm for guess box
 # scoring system based on time
-# display timer
 # generate words
 
 
@@ -99,8 +101,9 @@ def start_game_turns():
         print(f"Current drawer: {current_drawer}")  # Debug line
         # Additional data you want to send
         # Countdown loop
+        secret_word = random.choice(WORDS)
         for countdown in range(10):
-            emit('turn', {'currentDrawer': current_drawer, 'countdown': countdown}, broadcast=True)
+            emit('turn', {'currentDrawer': current_drawer, 'countdown': countdown, 'secretWord': secret_word}, broadcast=True)
             #time.sleep(1)  # Wait for 1 second
             socketio.sleep(1)
         # Emit the turn event with multiple pieces of data

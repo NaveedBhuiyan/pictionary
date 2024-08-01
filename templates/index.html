@@ -60,11 +60,17 @@
         #startButton {
             margin-top: 20px;
         }
+        #secretWord {
+            margin-top: 10px;
+            font-weight: bold;
+            display: none; /* Hidden by default */
+        }
     </style>
 </head>
 <body>
     <h1>Pictionary Game</h1>
      <div id="currentDrawer">Current Drawer: </div>
+    <div id="secretWord">Secret Word: </div>
     <button id="startButton">Start Game</button>
     <div id="container">
         <canvas id="drawingCanvas" width="800" height="600"></canvas>
@@ -89,6 +95,7 @@
         const sendButton = document.getElementById('sendButton');
         const usersList = document.getElementById('users');
         const startButton = document.getElementById('startButton');
+        const secretWordElement = document.getElementById('secretWord');
         let drawing = false;
         let canDraw = false;
 
@@ -194,11 +201,22 @@
         socket.on('turn', (data) => {
             const currentDrawer = data.currentDrawer;
             const countdown = data.countdown;
+            const secretWord = data.secretWord; // Get the secret word from the server
+
             console.log('inside turn method');
             canDraw = (currentDrawer === username); // Only the current user can draw
-                // Update the current drawer display
             const currentDrawerElement = document.getElementById('currentDrawer');
+            const secretWordElement = document.getElementById('secretWord');
+            // Update the current drawer display
             currentDrawerElement.textContent = `Current Drawer: ${currentDrawer} : ${countdown}`;
+
+            // Display the secret word only if the user is the current drawer
+            if (canDraw) {
+                secretWordElement.textContent = `Secret Word: ${secretWord}`;
+                secretWordElement.style.display = 'block'; // Make the secret word visible
+            } else {
+                secretWordElement.style.display = 'none'; // Hide the secret word
+            }
         });
 
     </script>
