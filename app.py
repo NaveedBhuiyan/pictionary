@@ -6,19 +6,19 @@ import random
 # Example list of words
 WORDS = ["apple", "banana", "car", "dog", "elephant"]
 
-#TODO
+# TODO
 # write algorithm for guess box
 # scoring system based on time
-# generate words
 
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
-ROOM_PASSWORD = 'lalaland'
+ROOM_PASSWORD = 'badigadi'
 socketio = SocketIO(app)
 
 # List to keep track of connected users
 connected_users = []
+secret_word = ''
 current_drawer_index = 0  # Index to track which user is drawing
 game_started = False  # Flag to check if the game has started
 
@@ -79,22 +79,8 @@ def handle_start_game():
         game_started = True
         start_game_turns()
 
-
-"""
 def start_game_turns():
-    global current_drawer_index, game_started
-    for i in range(10):
-        current_drawer_index %= len(connected_users)
-        current_drawer = connected_users[current_drawer_index]
-        print(f"Current drawer: {current_drawer}")  # Debug line
-        #socketio.emit('turn', {'currentDrawer': current_drawer, 'timer': i}, to='/')
-        emit('turn', current_drawer, broadcast=True)
-        current_drawer_index += 1
-        socketio.sleep(1)
-"""
-
-def start_game_turns():
-    global current_drawer_index, game_started
+    global current_drawer_index, game_started, secret_word
     while game_started:
         current_drawer_index %= len(connected_users)
         current_drawer = connected_users[current_drawer_index]
@@ -102,25 +88,36 @@ def start_game_turns():
         # Additional data you want to send
         # Countdown loop
         secret_word = random.choice(WORDS)
-        for countdown in range(10):
-            emit('turn', {'currentDrawer': current_drawer, 'countdown': countdown, 'secretWord': secret_word}, broadcast=True)
-            #time.sleep(1)  # Wait for 1 second
+        for countdown in range(30):
+            emit('turn', {'currentDrawer': current_drawer, 'countdown': countdown, 'secretWord': secret_word},
+                 broadcast=True)
             socketio.sleep(1)
-        # Emit the turn event with multiple pieces of data
-        #emit('turn', {'currentDrawer': current_drawer, 'countdown': countdown_time}, broadcast=True)
         current_drawer_index += 1
 
-            #socketio.sleep(10)
 
 @socketio.on('draw')
 def handle_draw(data):
     emit('draw', data, broadcast=True)
 
 
+"""
 @socketio.on('chat')
 def handle_chat(data):
     # Emit the chat message along with the username
     emit('chat', data, broadcast=True)
+"""
+
+@socketio.on('chat')
+def handle_chat(data):
+    username = data['username']
+    message = data['message']
+
+    # Check if the guessed word is correct
+    if message.strip().lower() == secret_word.lower():
+        emit('chat', {'username': '', 'message': f'{username} has guessed the word!'}, broadcast=True)
+        # Optionally, start a new round or handle win logic here
+    else:
+        emit('chat', {'username': username, 'message': message}, broadcast=True)
 
 
 if __name__ == '__main__':
